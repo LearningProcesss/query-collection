@@ -1,0 +1,22 @@
+language: node_js
+node_js:
+    - '12.6.0'
+jobs:
+  include:
+     - stage: Build and test
+       script:
+         - npm test
+         - npm build
+     - stage: npm release
+       script: npm run build
+       deploy: 
+         provider: npm
+         email: '$NPM_EMAIL'
+         api_key: '$NPM_TOKEN'
+         skip_cleanup: true
+         on:
+           tags: true
+branches:
+  only:
+    - master
+    - /^v[0-9]+.*$/

@@ -1,0 +1,35 @@
+{
+  "name": "query-collection",
+  "version": "1.0.0",
+  "description": "Query collection using MongoDB query syntax.",
+  "main": "index.js",
+  "scripts": {
+    "build": "npm run clean && npm run transpile",
+    "transpile": "babel source --out-dir distribution",
+    "clean": "rimraf distribution",
+    "prepublishOnly": "npm test && npm run build",
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LearningProcesss/query-collection.git"
+  },
+  "keywords": [
+    "syntax",
+    "query",
+    "collection"
+  ],
+  "author": "LearningProcesss",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/LearningProcesss/query-collection/issues"
+  },
+  "homepage": "https://github.com/LearningProcesss/query-collection#readme",
+  "devDependencies": {
+    "@babel/cli": "^7.8.4",
+    "@babel/core": "^7.8.6",
+    "@babel/preset-env": "^7.8.6",
+    "babel-jest": "^25.1.0",
+    "jest": "^25.1.0"
+  }
+}
