@@ -1,6 +1,6 @@
 {
   "name": "query-collection",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Query collection using MongoDB query syntax.",
   "main": "index.js",
   "scripts": {
