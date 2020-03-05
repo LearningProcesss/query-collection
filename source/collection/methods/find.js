@@ -9,9 +9,7 @@
 function find(collection, query) {
   if (!query) return collection;
   if (!collection || collection.length === 0) return collection;
-  //console.log("find --> start");
   const result = collection.filter(item => filterCallback(item, query));
-  //console.log(`result --> ${result.length}`);
   return result;
 }
 
@@ -46,12 +44,12 @@ function iterate(obj, comparisons, item) {
       //console.log(`iterate --> isArray --> ${JSON.stringify(obj[prop])}`);
       comparisons.push({
         name: prop,
-        operator: prop,
+        operator: prop, // $or,$and
         isArray: true,
         results: []
       });
-      obj[prop].forEach(i =>
-        iterate(i, comparisons[comparisons.length - 1].results, item)
+      obj[prop].forEach(arrayProp =>
+        iterate(arrayProp, comparisons[comparisons.length - 1].results, item)
       );
     } else {
       comparisons.push({
@@ -59,8 +57,16 @@ function iterate(obj, comparisons, item) {
         operator: "$eq",
         isArray: false,
         results: singleComparison(
-          { name: prop, value: item[prop], type: typeof item[prop] },
-          { name: prop, value: obj[prop], type: typeof obj[prop] }
+          {
+            name: prop,
+            value: item[prop],
+            type: variableTypeChecker(item[prop])
+          },
+          {
+            name: prop,
+            value: obj[prop],
+            type: variableTypeChecker(obj[prop])
+          }
         )
       });
     }
@@ -70,13 +76,27 @@ function iterate(obj, comparisons, item) {
 }
 
 function singleComparison(itemP, queryP) {
-  /*console.log(*/
-  //`singleComparison --> itemP: ${JSON.stringify(
-  //itemP
-  //)} , queryP: ${JSON.stringify(queryP)}`
-  /*);*/
+  //console.log(`singleComparison --> itemP: ${JSON.stringify(itemP)} , queryP: ${JSON.stringify(queryP)}`);
+  if (queryP.type === "RegExp" && itemP.type === "string") {
+    return queryP.value.test(itemP.value);
+  }
   if (itemP.type !== queryP.type) return false;
   return itemP.value === queryP.value ? true : false;
+}
+
+function variableTypeChecker(obj) {
+  switch (typeof obj) {
+    case "object":
+      if (obj instanceof Array) return "Array";
+      if (obj instanceof Date) return "Date";
+      if (obj instanceof RegExp) return "RegExp";
+      if (obj instanceof String) return "String";
+      if (obj instanceof Number) return "Number";
+
+      return "object";
+    default:
+      return typeof obj;
+  }
 }
 
 export { find };
