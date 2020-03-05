@@ -2,7 +2,8 @@
   "name": "query-collection",
   "version": "1.0.4",
   "description": "Query collection using MongoDB query syntax.",
-  "main": "index.js",
+  "main": "distribution/index.js",
+  "module": "distribution/index.js",
   "scripts": {
     "build": "npm run clean && npm run transpile",
     "transpile": "babel source --out-dir distribution",
@@ -18,6 +19,9 @@
     "syntax",
     "query",
     "collection"
+  ],
+  "files": [
+    "distribution"
   ],
   "author": "LearningProcesss",
   "license": "ISC",
