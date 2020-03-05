@@ -79,4 +79,4 @@ function singleComparison(itemP, queryP) {
   return itemP.value === queryP.value ? true : false;
 }
 
-export default find;
+export { find };
