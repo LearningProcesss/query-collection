@@ -16,9 +16,10 @@
     "url": "git+https://github.com/LearningProcesss/query-collection.git"
   },
   "keywords": [
-    "syntax",
     "query",
-    "collection"
+    "array",
+    "collection",
+    "syntax"
   ],
   "files": [
     "distribution"
