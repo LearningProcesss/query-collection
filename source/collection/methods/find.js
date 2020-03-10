@@ -13,6 +13,7 @@ function find(collection, query) {
   if (!collection || collection.length === 0) return collection;
 
   const result = collection.filter(item => filterCallback(item, query));
+  console.log("find -> result", result)
 
   return result;
 }
@@ -21,13 +22,24 @@ function filterCallback(item, query) {
 
   let ret = iterate(query, [], item);
 
-  return ret[0].isArray
-    ? ret[0].operator === "$or"
-      ? ret[0].results.some(r => r.results === true)
-      : ret[0].operator === "$and"
-        ? ret[0].results.every(r => r.results === true)
-        : null
-    : ret[0].results;
+  if (ret[0].isArray) {
+    if (ret[0].operator === "$or") {
+      return ret[0].results.some(r => r.results === true)
+    }
+    else if (ret[0].operator === "$and") {
+      return ret[0].results.every(r => r.results === true)
+    }
+  } else {
+    return ret[0].results
+  }
+
+  // return ret[0].isArray ?
+  //   ret[0].operator === "$or" ? ret[0].results.some(r => r.results === true)
+  //     :
+  //     ret[0].operator === "$and" ? ret[0].results.every(r => r.results === true)
+  //       :
+  //       null
+  //   : ret[0].results;
 }
 
 function iterate(obj, comparisons, item) {
@@ -56,24 +68,24 @@ function iterate(obj, comparisons, item) {
       propertyObject.forEach(arrayProp =>
         iterate(arrayProp, comparisons[comparisons.length - 1].results, item)
       );
-    } else if (propertyType === "object" && containsComparisonOperator(propertyObject)) {
+    } else if (propertyType === "object" && containsCQO(propertyObject)) {
 
-      const comparisonOperator = getComparisonOperator(propertyObject); // ["$eq","Parabolic Comet"]
+      const comparisonOperator = getCQO(propertyObject); // ["$eq","Parabolic Comet"]
 
-      // console.log(`getComparisonOperator -> ${JSON.stringify(comparisonOperator)}`);
+      // console.log(`getCQO -> ${JSON.stringify(comparisonOperator)}`);
 
       const comparison = createComparison(propName, comparisonOperator[0]);
 
       // console.log(`createComparison -> ${JSON.stringify(comparison)}`);
 
-      comparison.results = validateComparison(comparisonOperator[0], {
+      comparison.results = execComparison(comparisonOperator[0], {
         name: propName,
         value: item[propName],
         type: variableTypeChecker(item[propName])
       }, {
         name: propName,
-        value: propertyObject,
-        type: variableTypeChecker(propertyObject)
+        value: comparisonOperator[1],
+        type: variableTypeChecker(comparisonOperator[1])
       })
 
       comparisons.push(comparison);
@@ -82,7 +94,7 @@ function iterate(obj, comparisons, item) {
         name: propName,
         operator: "$eq",
         isArray: false,
-        results: validateComparison("$eq",
+        results: execComparison("$eq",
           {
             name: propName,
             value: item[propName],
@@ -96,57 +108,30 @@ function iterate(obj, comparisons, item) {
         )
       });
     }
-
-    // if (Array.isArray(obj[propName]) && ["$or", "$and"].includes(propName)) {
-    //   comparisons.push({
-    //     name: propName,
-    //     operator: propName, // $or,$and
-    //     isArray: true,
-    //     results: []
-    //   });
-    //   obj[propName].forEach(arrayProp =>
-    //     iterate(arrayProp, comparisons[comparisons.length - 1].results, item)
-    //   );
-    // } else {
-    //   comparisons.push({
-    //     name: propName,
-    //     operator: "$eq",
-    //     isArray: false,
-    //     results: validateComparison(
-    //       "$eq",
-    //       {
-    //         name: propName,
-    //         value: item[propName],
-    //         type: variableTypeChecker(item[propName])
-    //       },
-    //       {
-    //         name: propName,
-    //         value: obj[propName],
-    //         type: variableTypeChecker(obj[propName])
-    //       }
-    //     )
-    //   });
-    // }
   });
 
   return comparisons;
 }
 
 /**
+ * Check if the object contains one of the Comparison Query Operator.
  * 
  * @param {Object} object 
+ * 
+ * @returns {boolean} Returns exists check over one of the Comparison Query Operator and the object property.
  */
-function containsComparisonOperator(object) {
+function containsCQO(object) {
   return Object.getOwnPropertyNames(object).some(a1 => ["$eq", "$gt", "$gte", "$in", "$lt", "$lte", "$ne", "$nin"].includes(a1));
 }
 
 /**
+ * Get Comparison Query Operator from object.
  * 
  * @param {Object} object 
  * 
- * @returns ["key name", "key value"]
+ * @returns {["key name", "key value"]} Returns a KeyValuePair that contains the Comparison Query Operator.
  */
-function getComparisonOperator(object) {
+function getCQO(object) {
   return Object.entries(object)[0];
 }
 
@@ -159,28 +144,54 @@ function createComparison(propName, operator, isArray = false) {
   }
 }
 
-function validateComparison(operator, itemP, queryP) {
+/**
+ * 
+ * @param {string} operator 
+ * @param {Object} itemP 
+ * @param {Object} queryP 
+ * 
+ * @returns {boolean} Returns a check between the item property and the query property.
+ */
+function execComparison(operator, itemP, queryP) {
+  // console.log("execComparison -> operator, itemP, queryP", operator, itemP, queryP)
 
   const comparisonOp = ["$eq", "$gt", "$gte", "$in", "$lt", "$lte", "$ne", "$nin"];
 
   const evaluationOp = ["$regex"];
 
-  // console.log(`validateComparison --> itemP: ${JSON.stringify(itemP)} , queryP: ${JSON.stringify(queryP)}`);
+  // console.log(`execComparison --> itemP: ${JSON.stringify(itemP)} , queryP: ${JSON.stringify(queryP)}`);
 
-  if (queryP.type === "RegExp" && itemP.type === "string") {
-    return queryP.value.test(itemP.value);
-  } 
-  else if (itemP.type !== queryP.type) {
+  // if (queryP.type === "RegExp" && itemP.type === "string") {
+  //   return queryP.value.test(itemP.value);
+  // }
+  // else 
+  if (itemP.type !== queryP.type) {
     return false;
   } else if (["$gt", "$gte", "$lt", "$lte"].includes(operator) && (itemP.type !== "Number" || queryP.item !== "Number")) {
     return false;
   }
 
+  if (comparisonOp.includes(operator)) {
+    return compareCQO(operator, itemP.value, queryP.value)
+  } else if (evaluationOp.includes((operator))) {
+    return queryP.value.test(itemP.value);
+  }
 
   // return itemP.value === queryP.value ? true : false;
-  return compareComparisonOperator(operator, itemP.value, queryP.value)
+  // return compareCQO(operator, itemP.value, queryP.value)
+
+  return false;
 }
 
+/**
+ * 
+ * @param {Object} operatorObject 
+ * 
+ * @example validateCQO(["$in", ["test", "test2", "test3"]])
+ */
+function validateCQO(operatorObject) {
+
+}
 
 /**
  * 
@@ -190,16 +201,23 @@ function validateComparison(operator, itemP, queryP) {
  * 
  * @returns true or false
  * 
- * @example compareComparisonOperator("$eq", "Parabolic Curve", "Parabolic Non Curve") return false
+ * @example compareCQO("$eq", "Parabolic Curve", "Parabolic Non Curve") return false
  */
-function compareComparisonOperator(operator, itemValue, queryValue) {
+function compareCQO(operator, itemValue, queryValue) {
+  // console.log("compareCQO -> operator, itemValue, queryValue", operator, itemValue, queryValue, queryValue === itemValue)
   if (operator === "$eq") {
-    return itemValue === queryValue
+    return queryValue === itemValue
+  } else if (operator === "$gt") {
+    return queryValue > itemValue
+  } else if (operator === "$gte") {
+    return queryValue >= itemValue
+  } else if (operator === "$in") {
+    return queryValue.includes(itemValue)
   }
 }
 
 function compareEvaluationOperator(operator, itemValue, queryValue) {
-  if(operator === "$regex") {
+  if (operator === "$regex") {
     return queryValue.test(itemValue);
   }
 }

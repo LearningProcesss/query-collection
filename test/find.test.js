@@ -4,14 +4,51 @@ import { getNasaCollection } from "./fixtures/getCollection";
 const nasaCollection = getNasaCollection();
 
 describe("Test collection method: find", () => {
-  test("should $eq", () => {
-    const eqOperator = {
-      orbit_class: {
-        $eq: "Parabolic Comet"
-      }
-    };
-    const result = find(nasaCollection.slice(1), eqOperator);
-  });
+
+  describe('Comparison Query Operators', () => {
+    test("should $eq", () => {
+      const eqOperator = {
+        orbit_class: {
+          $eq: "Parabolic Comet"
+        }
+      };
+      const result = find(nasaCollection, eqOperator);
+      expect(result.length).toBeGreaterThan(0)
+      expect(result.every(i => i.orbit_class === "Parabolic Comet")).toBe(true);
+    });
+    test("should $gt", () => {
+      const gtOperator = {
+        h_mag: {
+          $gt: 20.3
+        }
+      };
+      const result = find(nasaCollection, gtOperator);
+      expect(result.length).toBeGreaterThan(0)
+      expect(result.every(i => i.h_mag > 20.3)).toBe(true);
+    });
+    // test("should $gte", () => {
+    //   const gteOperator = {
+    //     moid_au: {
+    //       $gte: 20.3
+    //     }
+    //   };
+    //   const result = find(nasaCollection, gteOperator);
+    //   expect(result.length).toBeGreaterThan(0)
+    //   expect(result.every(i => i.moid_au > 0.207)).toBe(true);
+    // });
+    // test("should $in", () => {
+    //   const inOperator = {
+    //     orbit_class: {
+    //       $in: ["Aten", "Amor"]
+    //     }
+    //   };
+    //   const result = find(nasaCollection, inOperator);
+    //   expect(result.length).toBeGreaterThan(0)
+    //   expect(result.every(i => (i.orbit_class === "Aten" || i.orbit_class === "Amor"))).toBe(true);
+    // });
+  })
+
+
 
   /*  test("should execute regex on string field with case sensitive match, simple query", () => {*/
   //const regexQuerySingleField = {
