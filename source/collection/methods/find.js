@@ -70,6 +70,20 @@ function iterate(obj, comparisons, item) {
       })
 
       comparisons.push(comparison);
+    } else if (propertyType === "RegExp") {
+      const comparison = createComparison(propName, "$regex");
+
+      comparison.results = execComparison("$regex", {
+        name: propName,
+        value: item[propName],
+        type: variableTypeChecker(item[propName])
+      }, {
+        name: propName,
+        value: propertyObject,
+        type: propertyType
+      });
+
+      comparisons.push(comparison);
     } else {
       comparisons.push({
         name: propName,
@@ -145,7 +159,7 @@ function execComparison(operator, itemP, queryP) {
 
   const evaluationOp = ["$regex"];
 
-  if (itemP.type !== queryP.type && !["$nin", "$in"].includes(operator)) {
+  if (itemP.type !== queryP.type && !["$nin", "$in"].includes(operator) && operator !== "$regex") {
     return false;
   } else if (["$gt", "$gte", "$lt", "$lte"].includes(operator) && (itemP.type !== "number" || queryP.type !== "number")) {
     return false;
@@ -180,7 +194,7 @@ function validateCQO(operatorObject) {
  * @example compareCQO("$eq", "Parabolic Curve", "Parabolic Non Curve") return false
  */
 function compareCQO(operator, itemValue, queryValue) {
-  console.log("compareCQO -> operator, itemValue, queryValue", operator, itemValue, queryValue, queryValue === itemValue)
+  // console.log("compareCQO -> operator, itemValue, queryValue", operator, itemValue, queryValue)
   if (operator === "$eq") {
     return itemValue === queryValue
   } else if (operator === "$gt") {
@@ -192,7 +206,7 @@ function compareCQO(operator, itemValue, queryValue) {
       return queryValue.includes(itemValue)
     } else if (Array.isArray(itemValue)) {
       return queryValue.some(q => itemValue.indexOf(q) !== -1)
-    }
+    }    
     return false
   } else if (operator == "$lt") {
     return itemValue < queryValue
