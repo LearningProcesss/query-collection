@@ -1,11 +1,10 @@
 import { find } from "../source";
-import { getNasaCollection, getFakerData } from "./fixtures/getCollection";
+import { getPeopleCollection } from "./fixtures/getCollection";
 
-const nasaCollection = getNasaCollection();
 let fakerData = [];
 
 beforeAll(async () => {
-  fakerData = await getFakerData();
+  fakerData = getPeopleCollection();
 })
 
 describe("Test collection method: find", () => {
@@ -101,69 +100,108 @@ describe("Test collection method: find", () => {
       expect(result.every(i => ![1, 2, 3, 4].includes(i.nCars))).toBe(true);
     });
   })
+  describe('Evaluation Operators', () => {
+    test("should execute regex on string field with case sensitive match, simple query", () => {
+      const regexQuerySingleField = {
+        surname: /Fi/
+      };
+      const result = find(fakerData, regexQuerySingleField);
+      expect(result[0].surname).toMatch(/Fi/);
+    });
+    test("should execute regex ignore case match, simple query", () => {
+      const regexQuerySingleField = {
+        surname: /ce/i
+      };
+      const result = find(fakerData, regexQuerySingleField);
 
+      expect(result[0].surname).toMatch(/ce/i);
+    });
+  })
+  describe('Logical Operators', () => {
+    test("should find elements whit one of the condtion satisfied -> $or array of with simple query", () => {
+      const regexOr = {
+        $or: [{ surname: /Doug/ }, { nCars: 3 }, { age: 40 }]
+      };
 
+      const result = find(fakerData, regexOr);
 
-  /*  test("should execute regex on string field with case sensitive match, simple query", () => {*/
-  //const regexQuerySingleField = {
-  //orbit_class: /te/
-  //};
-  //const result = find(nasaCollection, regexQuerySingleField);
+      expect(result.some(item => item.nCars === 3)).toBe(true);
+      expect(result.some(item => item.age === 40)).toBe(true);
+      expect(result.some(item => item.surname.match(/Doug/))).toBe(true);
+    });
+    test("should find elements with specific condition -> $and simple query", () => {
+      const andQuerySingleField = { age: 13 };
 
-  //expect(result[0].orbit_class).toMatch(/te/);
-  //});
-  //test("should execute regex ignore case match, simple query", () => {
-  //const regexQuerySingleField = {
-  //orbit_class: /co/i
-  //};
-  //const result = find(nasaCollection, regexQuerySingleField);
+      const result = find(fakerData, andQuerySingleField);
 
-  //expect(result[0].orbit_class).toMatch(/co/i);
-  //});
-  //test("should find elements whit one of the condtion satisfied", () => {
-  //const regexOr = {
-  //$or: [{ orbit_class: /te/ }, { pha: "Y" }]
-  //};
-  //const result = find(nasaCollection, regexOr);
-  //expect(result[0].pha).toBe("Y");
-  //expect(result[0].orbit_class).not.toMatch(/te/);
+      expect(result.every(item => item.age === 13)).toBe(true);
+    });
+    test('should find elements with multiple conditions -> $and simple query', () => {
+      const andQueryMultipleFields = {
+        nCars: 5,
+        email: /est/
+      }
 
-  //expect(result[5].orbit_class).toMatch(/te/);
-  //expect(result[5].pha).not.toBe("Y");
-  //});
+      const result = find(fakerData, andQueryMultipleFields);
 
-  //test("should return 30 elements using { pha: y } as [$and behaviour]", () => {
-  //const andQuerySingleField = { pha: "Y" };
-  //expect(find(nasaCollection, andQuerySingleField).length).toBe(30);
-  //});
-  //test("should return 151 elements using { pha: N, orbit_class: Aten } [$and behaviour]", () => {
-  //const andQueryMultipleFields = { pha: "N", orbit_class: "Aten" };
-  //expect(find(nasaCollection, andQueryMultipleFields).length).toBe(151);
-  //});
-  //test("should return 153 elements using $or $or: [{pha: N, orbit_class: Parabolic Comet}] [$or behaviour]", () => {
-  //const orQueryMultipleFields = {
-  //$or: [
-  //{
-  //pha: "N"
-  //},
-  //{
-  //orbit_class: "Parabolic Comet"
-  //}
-  //]
-  //};
-  //expect(find(nasaCollection, orQueryMultipleFields).length).toBe(153);
-  //});
-  //test("should $and [$and behaviour]", () => {
-  //const andQueryMultipleFields = {
-  //$and: [
-  //{
-  //pha: "N"
-  //},
-  //{
-  //orbit_class: "Parabolic Comet"
-  //}
-  //]
-  //};
-  //expect(find(nasaCollection, andQueryMultipleFields).length).toBe(0);
-  /*});*/
+      expect(result.every(item => item.nCars === 5 && item.email.match(/est/))).toBe(true);
+    })
+    test('should find elements with multiple or condition -> $or array simple query', () => {
+      const orQueryArray = {
+        $or: [
+          {
+            nCars: 3
+          },
+          {
+            age: 34
+          },
+          {
+            name: /L/
+          }
+        ]
+      }
+
+      const result = find(fakerData, orQueryArray);
+
+      expect(result.every(item => item.nCars === 3 || item.age === 34 || item.name.match(/L/))).toBe(true);
+    })
+    test('should ', () => {
+      const andQueryMultipleFields = {
+        $and: [
+          {
+            email: /test/
+          },
+          {
+            age: 5
+          }
+        ]
+      }
+
+      const result = find(fakerData, andQueryMultipleFields);
+
+      expect(result.every(item => item.email.match(/test/) && item.age === 5)).toBe(true);
+    })
+    test('should complex query', () => {
+      const complexQuery = {
+        $and: [
+          {
+            age: {
+              $gte: 50
+            }
+          },
+          {
+            nCars: {
+              $lt: 3
+            }
+          },
+          { name: /ne/i }
+        ]
+      }
+
+      const result = find(fakerData, complexQuery);
+      
+      expect(result.length).toBeGreaterThan(0);
+    })
+
+  })
 });
