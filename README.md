@@ -1,6 +1,6 @@
 # query-collection
 
-My goal is to create a simple but powerful way to search within a collection of object using a query that relflects MongoDB syntax.
+Goal is to create a simple but powerful way to search within a collection of object using a query that relflects MongoDB syntax.
   
 ## Installation
 
